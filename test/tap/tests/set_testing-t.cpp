@@ -27,6 +27,18 @@
 	} while(0)
 
 
+std::vector<std::string> split(const std::string& s, char delimiter)
+{
+	std::vector<std::string> tokens;
+	std::string token;
+	std::istringstream tokenStream(s);
+	while (std::getline(tokenStream, token, delimiter))
+	{
+		tokens.push_back(token);
+	}
+	return tokens;
+}
+
 using nlohmann::json;
 
 struct TestCase {
@@ -350,17 +362,20 @@ void * my_conn_thread(void *arg) {
 			vars = varsperconn[r1];
 		}
 
+		std::vector<std::string> commands = split(testCases[r2].command.c_str(), ';');
 		//fprintf(stderr, "TRACE : ====== START QUERIES %p\n", mysql);
 		//fprintf(stderr, "TRACE : QUERY 1 : %s\n", testCases[r2].command.c_str());
-		if (mysql_query(mysql, testCases[r2].command.c_str())) {
-			if (silent==0) {
-				fprintf(stderr,"%s\n", mysql_error(mysql));
+		for (auto c : commands) {
+			if (mysql_query(mysql, c.c_str())) {
+				if (silent==0) {
+					fprintf(stderr,"%s\n", mysql_error(mysql));
+				}
+			} else {
+				MYSQL_RES *result = mysql_store_result(mysql);
+				mysql_free_result(result);
+				select_OK++;
+				__sync_fetch_and_add(&g_select_OK,1);
 			}
-		} else {
-			MYSQL_RES *result = mysql_store_result(mysql);
-			mysql_free_result(result);
-			select_OK++;
-			__sync_fetch_and_add(&g_select_OK,1);
 		}
 
 		for (auto& el : testCases[r2].expected_vars.items()) {
