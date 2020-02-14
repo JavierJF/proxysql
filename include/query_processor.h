@@ -268,9 +268,12 @@ class Query_Processor {
 	private:
 	char rand_del[16];
 	umap_query_digest digest_umap;
+	umap_query_digest digest_umap2;
 	umap_query_digest_text digest_text_umap;
+	umap_query_digest_text digest_text_umap2;
 #ifdef PROXYSQL_QPRO_PTHREAD_MUTEX
 	pthread_rwlock_t digest_rwlock;
+	pthread_rwlock_t f_digest_rwlock;
 #else
 	rwlock_t digest_rwlock;
 	int64_t padding;	// to get rwlock cache aligned
@@ -342,6 +345,8 @@ class Query_Processor {
 	unsigned long long query_parser_update_counters(MySQL_Session *sess, enum MYSQL_COM_QUERY_command c, SQP_par_t *qp, unsigned long long t);
 
 	SQLite3_result * get_stats_commands_counters();
+	SQLite3_result * get_firewall_query_digests();
+	SQLite3_result * get_firewall_query_digests_reset();
 	SQLite3_result * get_query_digests();
 	SQLite3_result * get_query_digests_reset();
 	void get_query_digests_reset(umap_query_digest *uqd, umap_query_digest_text *uqdt);

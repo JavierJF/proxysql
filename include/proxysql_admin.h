@@ -256,6 +256,7 @@ class ProxySQL_Admin {
 
 	void stats___mysql_query_rules();
 	void stats___mysql_query_digests(bool reset, bool copy=false);
+	void stats___mysql_firewall_digests(bool reset, bool copy = false);
 	//void stats___mysql_query_digests_reset();
 	void stats___mysql_commands_counters();
 	void stats___mysql_processlist();

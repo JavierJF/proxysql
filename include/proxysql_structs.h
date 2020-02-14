@@ -421,6 +421,7 @@ struct __SQP_query_parser_t {
 	char buf[QUERY_DIGEST_BUF];
 	uint64_t digest;
 	uint64_t digest_total;
+	uint64_t digest_umap2_total;
 	char *digest_text;
 	char *first_comment;
 	char *query_prefix;

@@ -420,6 +420,10 @@ static int http_handler(void *cls, struct MHD_Connection *connection, const char
 
 #define STATS_SQLITE_TABLE_MYSQL_QUERY_DIGEST_RESET "CREATE TABLE stats_mysql_query_digest_reset (hostgroup INT , schemaname VARCHAR NOT NULL , username VARCHAR NOT NULL , client_address VARCHAR NOT NULL , digest VARCHAR NOT NULL , digest_text VARCHAR NOT NULL , count_star INTEGER NOT NULL , first_seen INTEGER NOT NULL , last_seen INTEGER NOT NULL , sum_time INTEGER NOT NULL , min_time INTEGER NOT NULL , max_time INTEGER NOT NULL , sum_rows_affected INTEGER NOT NULL , sum_rows_sent INTEGER NOT NULL , PRIMARY KEY(hostgroup, schemaname, username, client_address, digest))"
 
+#define STATS_SQLITE_TABLE_MYSQL_FIREWALL_DIGEST "CREATE TABLE stats_mysql_firewall_digests (schemaname VARCHAR NOT NULL , username VARCHAR NOT NULL , client_address VARCHAR NOT NULL , digest VARCHAR NOT NULL , PRIMARY KEY(schemaname, username, client_address, digest))"
+
+#define STATS_SQLITE_TABLE_MYSQL_FIREWALL_DIGEST_RESET "CREATE TABLE stats_mysql_firewall_digests_reset (schemaname VARCHAR NOT NULL , username VARCHAR NOT NULL , client_address VARCHAR NOT NULL , digest VARCHAR NOT NULL , PRIMARY KEY(schemaname, username, client_address, digest))"
+
 #define STATS_SQLITE_TABLE_MYSQL_GLOBAL "CREATE TABLE stats_mysql_global (Variable_Name VARCHAR NOT NULL PRIMARY KEY , Variable_Value VARCHAR NOT NULL)"
 
 #define STATS_SQLITE_TABLE_MEMORY_METRICS "CREATE TABLE stats_memory_metrics (Variable_Name VARCHAR NOT NULL PRIMARY KEY , Variable_Value VARCHAR NOT NULL)"
@@ -2662,6 +2666,8 @@ bool ProxySQL_Admin::GenericRefreshStatistics(const char *query_no_space, unsign
 	bool stats_mysql_connection_pool_reset=false;
 	bool stats_mysql_query_digest=false;
 	bool stats_mysql_query_digest_reset=false;
+	bool stats_mysql_firewall_digests=false;
+	bool stats_mysql_firewall_digests_reset=false;
 	bool stats_mysql_errors=false;
 	bool stats_mysql_errors_reset=false;
 	bool stats_mysql_global=false;
@@ -2727,6 +2733,34 @@ bool ProxySQL_Admin::GenericRefreshStatistics(const char *query_no_space, unsign
 		while (_ret = strstr(c,"stats_mysql_query_digest")) {
 			nd++;
 			c = _ret + strlen("stats_mysql_query_digest");
+		}
+		if (nd == ndr) {
+			stats_mysql_query_digest = false;
+		}
+	}
+	if (strstr(query_no_space,"stats_mysql_firewall_digests"))
+		{ stats_mysql_firewall_digests=true; refresh=true; }
+	if (strstr(query_no_space,"stats_mysql_firewall_digests_reset"))
+		{ stats_mysql_firewall_digests_reset=true; refresh=true; }
+	if (stats_mysql_firewall_digests_reset == true && stats_mysql_firewall_digests == true) {
+		int nd = 0;
+		int ndr= 0;
+		char *c = NULL;
+		char *_ret = NULL;
+		c = (char *)query_no_space;
+		_ret = NULL;
+
+		while (_ret = strstr(c,"stats_mysql_firewall_digests_reset")) {
+			ndr++;
+			c = _ret + strlen("stats_mysql_firewall_digests_reset");
+		}
+
+		c = (char *)query_no_space;
+		_ret = NULL;
+
+		while (_ret = strstr(c,"stats_mysql_firewall_digests")) {
+			nd++;
+			c = _ret + strlen("stats_mysql_firewall_digests");
 		}
 		if (nd == ndr) {
 			stats_mysql_query_digest = false;
@@ -2852,6 +2886,13 @@ bool ProxySQL_Admin::GenericRefreshStatistics(const char *query_no_space, unsign
 		} else {
 			if (stats_mysql_query_digest) {
 				stats___mysql_query_digests(false);
+			}
+		}
+		if (stats_mysql_firewall_digests_reset) {
+			stats___mysql_firewall_digests(true, stats_mysql_query_digest);
+		} else {
+			if (stats_mysql_firewall_digests) {
+				stats___mysql_firewall_digests(false);
 			}
 		}
 		if (stats_mysql_errors)
@@ -4995,6 +5036,8 @@ bool ProxySQL_Admin::init() {
 	insert_into_tables_defs(tables_defs_stats,"stats_mysql_free_connections", STATS_SQLITE_TABLE_MYSQL_FREE_CONNECTIONS);
 	insert_into_tables_defs(tables_defs_stats,"stats_mysql_query_digest", STATS_SQLITE_TABLE_MYSQL_QUERY_DIGEST);
 	insert_into_tables_defs(tables_defs_stats,"stats_mysql_query_digest_reset", STATS_SQLITE_TABLE_MYSQL_QUERY_DIGEST_RESET);
+	insert_into_tables_defs(tables_defs_stats,"stats_mysql_firewall_digest", STATS_SQLITE_TABLE_MYSQL_FIREWALL_DIGEST );
+	insert_into_tables_defs(tables_defs_stats,"stats_mysql_firewall_digest_reset", STATS_SQLITE_TABLE_MYSQL_FIREWALL_DIGEST_RESET );
 	insert_into_tables_defs(tables_defs_stats,"stats_mysql_errors", STATS_SQLITE_TABLE_MYSQL_ERRORS);
 	insert_into_tables_defs(tables_defs_stats,"stats_mysql_errors_reset", STATS_SQLITE_TABLE_MYSQL_ERRORS_RESET);
 	insert_into_tables_defs(tables_defs_stats,"stats_mysql_global", STATS_SQLITE_TABLE_MYSQL_GLOBAL);
@@ -7559,6 +7602,86 @@ void ProxySQL_Admin::stats___proxysql_servers_metrics() {
 	delete resultset;
 }
 
+void ProxySQL_Admin::stats___mysql_firewall_digests(bool reset, bool copy) {
+	if (!GloQPro) return;
+	SQLite3_result * resultset = NULL;
+
+	if (reset == true) {
+		resultset = GloQPro->get_firewall_query_digests_reset();
+	} else {
+		resultset = GloQPro->get_firewall_query_digests();
+	}
+
+	if (resultset == NULL) return;
+	statsdb->execute("BEGIN");
+
+	int rc;
+	sqlite3_stmt *statement1 = NULL;
+	sqlite3_stmt *statement32 = NULL;
+
+	char *query1 = NULL;
+	char *query32 = NULL;
+
+	statsdb->execute("DELETE FROM stats_mysql_firewall_digests_reset");
+	statsdb->execute("DELETE FROM stats_mysql_firewall_digests");
+
+	if (reset) {
+		query1 = (char *)"INSERT INTO stats_mysql_firewall_digests_reset VALUES (?1, ?2, ?3, ?4)";
+		query32 = (char *)"INSERT INTO stats_mysql_firewall_digests_reset VALUES (?1, ?2, ?3, ?4), (?5, ?6, ?7, ?8), (?9, ?10, ?11, ?12), (?13, ?14, ?15, ?16), (?17, ?18, ?19, ?20), (?21, ?22, ?23, ?24), (?25, ?26, ?27, ?28), (?29, ?30, ?31, ?32), (?33, ?34, ?35, ?36), (?37, ?38, ?39, ?40), (?41, ?42, ?43, ?44), (?45, ?46, ?47, ?48), (?49, ?50, ?51, ?52), (?53, ?54, ?55, ?56), (?57, ?58, ?59, ?60), (?61, ?62, ?63, ?64), (?65, ?66, ?67, ?68), (?69, ?70, ?71, ?72), (?73, ?74, ?75, ?76), (?77, ?78, ?79, ?80), (?81, ?82, ?83, ?84), (?85, ?86, ?87, ?88), (?89, ?90, ?91, ?92), (?93, ?94, ?95, ?96), (?97, ?98, ?99, ?100), (?101, ?102, ?103, ?104), (?105, ?106, ?107, ?108), (?109, ?110, ?111, ?112), (?113, ?114, ?115, ?116), (?117, ?118, ?119, ?120), (?121, ?122, ?123, ?124), (?125, ?126, ?127, ?128)";
+	} else {
+		query1 = (char *)"INSERT INTO stats_mysql_firewall_digests VALUES (?1, ?2, ?3, ?4)";
+		query32 = (char *)"INSERT INTO stats_mysql_firewall_digests VALUES (?1, ?2, ?3, ?4), (?5, ?6, ?7, ?8), (?9, ?10, ?11, ?12), (?13, ?14, ?15, ?16), (?17, ?18, ?19, ?20), (?21, ?22, ?23, ?24), (?25, ?26, ?27, ?28), (?29, ?30, ?31, ?32), (?33, ?34, ?35, ?36), (?37, ?38, ?39, ?40), (?41, ?42, ?43, ?44), (?45, ?46, ?47, ?48), (?49, ?50, ?51, ?52), (?53, ?54, ?55, ?56), (?57, ?58, ?59, ?60), (?61, ?62, ?63, ?64), (?65, ?66, ?67, ?68), (?69, ?70, ?71, ?72), (?73, ?74, ?75, ?76), (?77, ?78, ?79, ?80), (?81, ?82, ?83, ?84), (?85, ?86, ?87, ?88), (?89, ?90, ?91, ?92), (?93, ?94, ?95, ?96), (?97, ?98, ?99, ?100), (?101, ?102, ?103, ?104), (?105, ?106, ?107, ?108), (?109, ?110, ?111, ?112), (?113, ?114, ?115, ?116), (?117, ?118, ?119, ?120), (?121, ?122, ?123, ?124), (?125, ?126, ?127, ?128)";
+	}
+
+	rc = statsdb->prepare_v2(query1, &statement1);
+	ASSERT_SQLITE_OK(rc, statsdb);
+	rc = statsdb->prepare_v2(query32, &statement32);
+	ASSERT_SQLITE_OK(rc, statsdb);
+
+	int row_idx = 0;
+	int max_bulk_row_idx = resultset->rows_count / 32;
+	max_bulk_row_idx = max_bulk_row_idx * 32;
+
+	for (std::vector<SQLite3_row *>::iterator it = resultset->rows.begin() ; it != resultset->rows.end(); ++it) {
+		SQLite3_row *r1 = *it;
+		int idx = row_idx % 32;
+		if (row_idx < max_bulk_row_idx) { // bulk
+			rc=sqlite3_bind_text(statement32, (idx*4) + 1, r1->fields[0], -1, SQLITE_TRANSIENT); ASSERT_SQLITE_OK(rc, statsdb);
+			rc=sqlite3_bind_text(statement32, (idx*4) + 2, r1->fields[1], -1, SQLITE_TRANSIENT); ASSERT_SQLITE_OK(rc, statsdb);
+			rc=sqlite3_bind_text(statement32, (idx*4) + 3, r1->fields[2], -1, SQLITE_TRANSIENT); ASSERT_SQLITE_OK(rc, statsdb);
+			rc=sqlite3_bind_text(statement32, (idx*4) + 4, r1->fields[3], -1, SQLITE_TRANSIENT); ASSERT_SQLITE_OK(rc, statsdb);
+
+			if (idx==31) {
+				SAFE_SQLITE3_STEP2(statement32);
+				rc=sqlite3_clear_bindings(statement32); ASSERT_SQLITE_OK(rc, statsdb);
+				rc=sqlite3_reset(statement32); 			ASSERT_SQLITE_OK(rc, statsdb);
+			}
+		} else { // single row
+			rc=sqlite3_bind_text(statement1, 1, r1->fields[0], -1, SQLITE_TRANSIENT); ASSERT_SQLITE_OK(rc, statsdb);
+			rc=sqlite3_bind_text(statement1, 2, r1->fields[1], -1, SQLITE_TRANSIENT); ASSERT_SQLITE_OK(rc, statsdb);
+			rc=sqlite3_bind_text(statement1, 3, r1->fields[2], -1, SQLITE_TRANSIENT); ASSERT_SQLITE_OK(rc, statsdb);
+			rc=sqlite3_bind_text(statement1, 4, r1->fields[3], -1, SQLITE_TRANSIENT); ASSERT_SQLITE_OK(rc, statsdb);
+
+			SAFE_SQLITE3_STEP2(statement1);
+			rc=sqlite3_clear_bindings(statement1); 	ASSERT_SQLITE_OK(rc, statsdb);
+			rc=sqlite3_reset(statement1); 			ASSERT_SQLITE_OK(rc, statsdb);
+		}
+		row_idx++;
+	}
+
+	sqlite3_finalize(statement1);
+	sqlite3_finalize(statement32);
+
+	if (reset) {
+		if (copy) {
+			statsdb->execute("INSERT INTO stats_mysql_firewall_digests SELECT * FROM stats_mysql_firewall_digests_reset");
+		}
+	}
+
+	statsdb->execute("COMMIT");
+	delete resultset;
+}
+
 void ProxySQL_Admin::stats___mysql_query_digests(bool reset, bool copy) {
 	if (!GloQPro) return;
 	SQLite3_result * resultset=NULL;
@@ -9749,7 +9872,7 @@ void ProxySQL_Admin::load_mysql_servers_to_runtime() {
 	if (resultset) delete resultset;
 	resultset=NULL;
 
-	query=(char *)"SELECT a.* FROM mysql_replication_hostgroups a LEFT JOIN mysql_replication_hostgroups b ON a.writer_hostgroup=b.reader_hostgroup WHERE b.reader_hostgroup IS NULL";	
+	query=(char *)"SELECT a.* FROM mysql_replication_hostgroups a LEFT JOIN mysql_replication_hostgroups b ON a.writer_hostgroup=b.reader_hostgroup WHERE b.reader_hostgroup IS NULL";
 	proxy_debug(PROXY_DEBUG_ADMIN, 4, "%s\n", query);
 	admindb->execute_statement(query, &error , &cols , &affected_rows , &resultset_replication);
 
@@ -9780,7 +9903,7 @@ void ProxySQL_Admin::load_mysql_servers_to_runtime() {
 	if (resultset) delete resultset;
 	resultset=NULL;
 
-	query=(char *)"SELECT a.* FROM mysql_group_replication_hostgroups a LEFT JOIN mysql_group_replication_hostgroups b ON (a.writer_hostgroup=b.reader_hostgroup OR a.writer_hostgroup=b.backup_writer_hostgroup OR a.writer_hostgroup=b.offline_hostgroup) WHERE b.reader_hostgroup IS NULL AND b.backup_writer_hostgroup IS NULL AND b.offline_hostgroup IS NULL";	
+	query=(char *)"SELECT a.* FROM mysql_group_replication_hostgroups a LEFT JOIN mysql_group_replication_hostgroups b ON (a.writer_hostgroup=b.reader_hostgroup OR a.writer_hostgroup=b.backup_writer_hostgroup OR a.writer_hostgroup=b.offline_hostgroup) WHERE b.reader_hostgroup IS NULL AND b.backup_writer_hostgroup IS NULL AND b.offline_hostgroup IS NULL"; 
 	proxy_debug(PROXY_DEBUG_ADMIN, 4, "%s\n", query);
 	admindb->execute_statement(query, &error , &cols , &affected_rows , &resultset_group_replication);
 	if (error) {
