@@ -1480,9 +1480,9 @@ void Query_Processor::get_query_digests_reset(umap_query_digest *uqd, umap_query
 #endif
 }
 
-SQLite3_result* Query_Processor::get_firewall_query_digests() {
+unique_ptr<SQLite3_result> Query_Processor::get_firewall_query_digests() {
 	proxy_debug(PROXY_DEBUG_MYSQL_QUERY_PROCESSOR, 4, "Dumping current query digest\n");
-	SQLite3_result *result { NULL };
+	std::unique_ptr<SQLite3_result> result { nullptr };
 
 #ifdef PROXYSQL_QPRO_PTHREAD_MUTEX
 	pthread_rwlock_rdlock(&f_digest_rwlock);
@@ -1496,10 +1496,10 @@ SQLite3_result* Query_Processor::get_firewall_query_digests() {
 	size_t map_size { digest_umap2.size() };
 
 	if (map_size >= DIGEST_STATS_FAST_MINSIZE) {
-		result = new SQLite3_result(4, true);
+		result = unique_ptr<SQLite3_result>(new SQLite3_result(4, true));
 		curtime1 = monotonic_time();
 	} else {
-		result = new SQLite3_result(4);
+		result = unique_ptr<SQLite3_result>(new SQLite3_result(4));
 	}
 #else
 	result = new SQLite3_result(4);
@@ -1519,7 +1519,7 @@ SQLite3_result* Query_Processor::get_firewall_query_digests() {
 			args[i].m=i;
 			args[i].gu = &digest_umap2;
 			args[i].gtu = &digest_text_umap2;
-			args[i].result = result;
+			args[i].result = result.get();
 			args[i].free_me = false;
 		}
 		for (int i=0; i<n; i++) {
@@ -1568,8 +1568,8 @@ SQLite3_result* Query_Processor::get_firewall_query_digests() {
 	return result;
 }
 
-SQLite3_result * Query_Processor::get_firewall_query_digests_reset() {
-	SQLite3_result *result = NULL;
+std::unique_ptr<SQLite3_result> Query_Processor::get_firewall_query_digests_reset() {
+	std::unique_ptr<SQLite3_result> result { nullptr };
 #ifdef PROXYSQL_QPRO_PTHREAD_MUTEX
 	pthread_rwlock_wrlock(&f_digest_rwlock);
 #else
@@ -1585,9 +1585,9 @@ SQLite3_result * Query_Processor::get_firewall_query_digests_reset() {
 	size_t map_size = digest_umap2.size();
 	if (map_size >= DIGEST_STATS_FAST_MINSIZE) {
 		curtime1=monotonic_time();
-		result = new SQLite3_result(4, true);
+		result = unique_ptr<SQLite3_result>(new SQLite3_result(4, true));
 	} else {
-		result = new SQLite3_result(4);
+		result = unique_ptr<SQLite3_result>(new SQLite3_result(4));
 	}
 #else
 	result = new SQLite3_result(4);
@@ -1602,7 +1602,7 @@ SQLite3_result * Query_Processor::get_firewall_query_digests_reset() {
 			args[i].m = i;
 			args[i].gu = &digest_umap2;
 			args[i].gtu = &digest_text_umap2;
-			args[i].result = result;
+			args[i].result = result.get();
 			args[i].free_me = free_me;
 			args[i].defer_free = defer_free;
 		}

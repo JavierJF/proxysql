@@ -7610,7 +7610,7 @@ void ProxySQL_Admin::stats___proxysql_servers_metrics() {
 
 void ProxySQL_Admin::stats___mysql_firewall_digests(bool reset, bool copy) {
 	if (!GloQPro) return;
-	SQLite3_result * resultset { nullptr };
+	unique_ptr<SQLite3_result> resultset { nullptr };
 
 	if (reset == true) {
 		resultset = GloQPro->get_firewall_query_digests_reset();
@@ -7682,8 +7682,6 @@ void ProxySQL_Admin::stats___mysql_firewall_digests(bool reset, bool copy) {
 	}
 
 	statsdb->execute("COMMIT");
-
-	delete resultset;
 }
 
 void ProxySQL_Admin::stats___mysql_query_digests(bool reset, bool copy) {
