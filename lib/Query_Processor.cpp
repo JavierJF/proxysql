@@ -249,6 +249,33 @@ QP_query_digest_stats::~QP_query_digest_stats() {
 		client_address=NULL;
 	}
 }
+
+char** QP_query_digest_f_stats::get_row(umap_query_digest_text* digest_text_umap, _query_digest_f_stats_pointers_t* qdsp) {
+	char **pta=qdsp->pta;
+
+	assert(schemaname);
+	pta[0] = schemaname;
+	assert(username);
+	pta[1] = username;
+	assert(client_address);
+	pta[2] = client_address;
+	sprintf(qdsp->digest,"0x%016llX", static_cast<uint64_t>(digest));
+	pta[3] = qdsp->digest;
+
+	if (digest_text) {
+		pta[4] = digest_text;
+	} else {
+		std::unordered_map<uint64_t, char *>::iterator it;
+		it = digest_text_umap->find(digest);
+		if (it != digest_text_umap->end()) {
+			pta[4] = it->second;
+		} else {
+			assert(0);
+		}
+	}
+	return pta;
+}
+
 #ifdef DIGEST_STATS_FAST_1
 char **QP_query_digest_stats::get_row(umap_query_digest_text *digest_text_umap, query_digest_stats_pointers_t *qdsp) {
 	char **pta=qdsp->pta;

@@ -87,6 +87,36 @@ class QP_query_digest_stats {
 #endif
 };
 
+#ifdef DIGEST_STATS_FAST_1
+typedef struct _query_digest_f_stats_pointers_t {
+	char *pta[14];
+	char digest[24];
+	char count_star[24];
+	char first_seen[24];
+	char last_seen[24];
+	char sum_time[24];
+	char min_time[24];
+	char max_time[24];
+	char hid[24];
+	char rows_affected[24];
+	char rows_sent[24];
+} query_digest_f_stats_pointers_t;
+#endif
+
+class QP_query_digest_f_stats {
+	uint64_t digest;
+	char* digest_text;
+	char* username;
+	char* schemaname;
+	char* client_address;
+
+#ifdef DIGEST_STATS_FAST_1
+	char** get_row(umap_query_digest_text* digest_text_umap, query_digest_f_stats_pointers_t *qdsp);
+#else
+	char** get_row(umap_query_digest_text* digest_text_umap);
+#endif
+};
+
 struct _Query_Processor_rule_t {
 	int rule_id;
 	bool active;
