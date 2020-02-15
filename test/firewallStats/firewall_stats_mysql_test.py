@@ -2,6 +2,7 @@ import mysql.connector
 import unittest
 import subprocess
 
+
 mysqlc = mysql.connector.connect(
     host="localhost",
     user="msandbox",
@@ -35,11 +36,13 @@ S_FIREWALL_RESET_QUERY = "SELECT * FROM stats_mysql_firewall_digests_reset"
 S_DIGESTS_TRACK_HOSTNAME = "SET mysql-query_digests_track_hostname = \"true\""
 S_LOAD_MYSQL_VARIABLES = "LOAD MYSQL VARIABLES TO RUNTIME"
 
+
 class EmptyFirewallDigests(unittest.TestCase):
     def setUp(self):
         # Empty the current firewall stats
         proxysql_cursor.execute(S_FIREWALL_RESET_QUERY)
         proxysql_cursor.execute(S_FIREWALL_RESET_QUERY)
+        # Change the policy for traking "source_ip"
         proxysql_cursor.execute(S_DIGESTS_TRACK_HOSTNAME)
         proxysql_cursor.execute(S_LOAD_MYSQL_VARIABLES)
 
@@ -66,7 +69,7 @@ class EmptyFirewallDigests(unittest.TestCase):
         if len(l_result) != 1:
             self.fail("Invalid number of elements in stats_mysql_firewall_digests table")
 
-        for (schemaname, username, client_address, digest) in l_result:
+        for (schemaname, username, client_address, _) in l_result:
             self.assertEqual(schemaname, "information_schema")
             self.assertEqual(username, "msandbox")
             self.assertEqual(client_address, local_pip)
@@ -112,4 +115,4 @@ class EmptyFirewallDigests(unittest.TestCase):
             self.fail("Invalid number of elements in stats_mysql_firewall_digests table")
 
 if __name__ == "__main__":
-    unittest.main() # run all tests
+    unittest.main()
