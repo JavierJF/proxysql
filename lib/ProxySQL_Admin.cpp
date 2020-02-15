@@ -2657,6 +2657,27 @@ void ProxySQL_Admin::flush_configdb() { // see #923
 	wrunlock();
 }
 
+/**
+ * @brief
+ *  Helper function for counting the occurrences of a substring in a string.
+ *
+ * @param str The string in which the occurrences are going to be searched.
+ * @param substr The substring to be searched in "str" param.
+ * @return The number of occurences of "substr" param in "str" param.
+ */
+inline uint64_t count_ocurrences(const char* str, const char* substr) {
+	char* c { const_cast<char*>( str ) };
+	char* ret { nullptr };
+	uint64_t count { 0 };
+
+	while ((ret = strstr(const_cast<char*>(c), const_cast<char*>(substr)))) {
+		count++;
+		c = ret + strlen(substr);
+	}
+
+	return count;
+}
+
 bool ProxySQL_Admin::GenericRefreshStatistics(const char *query_no_space, unsigned int query_no_space_length, bool admin) {
 	bool ret=false;
 	bool refresh=false;
@@ -2743,25 +2764,9 @@ bool ProxySQL_Admin::GenericRefreshStatistics(const char *query_no_space, unsign
 	if (strstr(query_no_space,"stats_mysql_firewall_digests_reset"))
 		{ stats_mysql_firewall_digests_reset=true; refresh=true; }
 	if (stats_mysql_firewall_digests_reset == true && stats_mysql_firewall_digests == true) {
-		int nd = 0;
-		int ndr= 0;
-		char *c = NULL;
-		char *_ret = NULL;
-		c = (char *)query_no_space;
-		_ret = NULL;
+		int nd = count_ocurrences(query_no_space, "stats_mysql_firewall_digests_reset");
+		int ndr = count_ocurrences(query_no_space, "stats_mysql_firewall_digests");
 
-		while (_ret = strstr(c,"stats_mysql_firewall_digests_reset")) {
-			ndr++;
-			c = _ret + strlen("stats_mysql_firewall_digests_reset");
-		}
-
-		c = (char *)query_no_space;
-		_ret = NULL;
-
-		while (_ret = strstr(c,"stats_mysql_firewall_digests")) {
-			nd++;
-			c = _ret + strlen("stats_mysql_firewall_digests");
-		}
 		if (nd == ndr) {
 			stats_mysql_query_digest = false;
 		}
