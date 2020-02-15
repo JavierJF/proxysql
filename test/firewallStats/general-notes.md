@@ -48,5 +48,4 @@ Now that all the requested and basic functionality has been complemented, I will
 3. Change the used class 'QP_query_digest_stats' for a smaller one that suits best it's purpose. :soon:
     * I have create the new types: "query_digest_f_stats_pointers_t", "QP_query_digest_f_stats".
     * A initial non-tested function: "QP_query_digest_f_stats::get_row"
-    * The following steps would be to create a replacemente to the function "get_query_digests_parallel" and change the required places in "get_firewall_query_digests_reset" and "get_firewall_query_digests", finally,
-    test the whole functionality.
+    * The following steps would be to create a replacemente to the function "get_query_digests_parallel" and change the required places in "get_firewall_query_digests_reset" and "get_firewall_query_digests". Finally, test the whole functionality.
