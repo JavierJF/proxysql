@@ -7645,8 +7645,8 @@ void ProxySQL_Admin::stats___mysql_firewall_digests(bool reset, bool copy) {
 	ASSERT_SQLITE_OK(rc, statsdb);
 
 	uint64_t row_idx { 0 };
-	uint64_t max_bulk_row_idx { resultset->rows_count / 32 };
-	max_bulk_row_idx { max_bulk_row_idx * 32 };
+	uint64_t max_bulk_row_idx { static_cast<uint64_t>(resultset->rows_count / 32) };
+	max_bulk_row_idx = max_bulk_row_idx * 32;
 
 	for (std::vector<SQLite3_row *>::iterator row = resultset->rows.begin(); row != resultset->rows.end(); ++row) {
 		uint64_t idx = row_idx % 32;
