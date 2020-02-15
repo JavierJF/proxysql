@@ -1654,8 +1654,8 @@ std::unique_ptr<SQLite3_result> Query_Processor::get_firewall_query_digests_rese
 #ifdef DIGEST_STATS_FAST_1
 	if (map_size >= DIGEST_STATS_FAST_MINSIZE) {
 		curtime2=monotonic_time();
-		curtime1 = curtime1/1000;
-		curtime2 = curtime2/1000;
+		curtime1 = curtime1 / 1000;
+		curtime2 = curtime2 / 1000;
 		proxy_info("Running query on stats_mysql_query_digest_reset: locked for %llums to retrieve %llu entries\n", curtime2-curtime1, map_size);
 		if (free_me) {
 			if (defer_free) {
