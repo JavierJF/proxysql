@@ -7654,7 +7654,7 @@ void ProxySQL_Admin::stats___mysql_firewall_digests(bool reset, bool copy) {
 			if (idx==31) {
 				SAFE_SQLITE3_STEP2(statement32);
 				rc=sqlite3_clear_bindings(statement32); ASSERT_SQLITE_OK(rc, statsdb);
-				rc=sqlite3_reset(statement32); 			ASSERT_SQLITE_OK(rc, statsdb);
+				rc=sqlite3_reset(statement32); ASSERT_SQLITE_OK(rc, statsdb);
 			}
 		} else { // single row
 			rc=sqlite3_bind_text(statement1, 1, r1->fields[0], -1, SQLITE_TRANSIENT); ASSERT_SQLITE_OK(rc, statsdb);
@@ -7663,8 +7663,8 @@ void ProxySQL_Admin::stats___mysql_firewall_digests(bool reset, bool copy) {
 			rc=sqlite3_bind_text(statement1, 4, r1->fields[3], -1, SQLITE_TRANSIENT); ASSERT_SQLITE_OK(rc, statsdb);
 
 			SAFE_SQLITE3_STEP2(statement1);
-			rc=sqlite3_clear_bindings(statement1); 	ASSERT_SQLITE_OK(rc, statsdb);
-			rc=sqlite3_reset(statement1); 			ASSERT_SQLITE_OK(rc, statsdb);
+			rc=sqlite3_clear_bindings(statement1); ASSERT_SQLITE_OK(rc, statsdb);
+			rc=sqlite3_reset(statement1); ASSERT_SQLITE_OK(rc, statsdb);
 		}
 		row_idx++;
 	}
