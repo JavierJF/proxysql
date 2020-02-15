@@ -1480,18 +1480,21 @@ void Query_Processor::get_query_digests_reset(umap_query_digest *uqd, umap_query
 #endif
 }
 
-SQLite3_result * Query_Processor::get_firewall_query_digests() {
+SQLite3_result* Query_Processor::get_firewall_query_digests() {
 	proxy_debug(PROXY_DEBUG_MYSQL_QUERY_PROCESSOR, 4, "Dumping current query digest\n");
-	SQLite3_result *result = NULL;
+	SQLite3_result *result { NULL };
+
 #ifdef PROXYSQL_QPRO_PTHREAD_MUTEX
 	pthread_rwlock_rdlock(&f_digest_rwlock);
 #else
 	spin_rdlock(&f_digest_rwlock);
 #endif
+
 #ifdef DIGEST_STATS_FAST_1
-	unsigned long long curtime1;
-	unsigned long long curtime2;
-	size_t map_size = digest_umap2.size();
+	uint64_t curtime1 { 0 };
+	uint64_t curtime2 { 0 };
+	size_t map_size { digest_umap2.size() };
+
 	if (map_size >= DIGEST_STATS_FAST_MINSIZE) {
 		result = new SQLite3_result(4, true);
 		curtime1 = monotonic_time();
@@ -1501,6 +1504,7 @@ SQLite3_result * Query_Processor::get_firewall_query_digests() {
 #else
 	result = new SQLite3_result(4);
 #endif
+
 	result->add_column_definition(SQLITE_TEXT,"schemaname");
 	result->add_column_definition(SQLITE_TEXT,"username");
 	result->add_column_definition(SQLITE_TEXT,"client_address");
@@ -1508,11 +1512,11 @@ SQLite3_result * Query_Processor::get_firewall_query_digests() {
 
 #ifdef DIGEST_STATS_FAST_1
 	if (map_size >= DIGEST_STATS_FAST_MINSIZE) {
-		int n=DIGEST_STATS_FAST_THREADS;
+		uint32_t n { DIGEST_STATS_FAST_THREADS };
 		get_query_digests_parallel_args args[n];
+
 		for (int i=0; i<n; i++) {
 			args[i].m=i;
-			//args[i].ret=0;
 			args[i].gu = &digest_umap2;
 			args[i].gtu = &digest_text_umap2;
 			args[i].result = result;
@@ -1529,10 +1533,11 @@ SQLite3_result * Query_Processor::get_firewall_query_digests() {
 	} else {
 #endif
 		for (std::unordered_map<uint64_t, void *>::iterator it=digest_umap2.begin(); it!=digest_umap2.end(); ++it) {
-			QP_query_digest_stats *qds=(QP_query_digest_stats *)it->second;
+			QP_query_digest_stats *qds { static_cast<QP_query_digest_stats *>(it->second) };
+
 #ifdef DIGEST_STATS_FAST_1
-			query_digest_stats_pointers_t *a = (query_digest_stats_pointers_t *)malloc(sizeof(query_digest_stats_pointers_t));
-			char **pta=qds->get_row(&digest_text_umap2, a);
+			query_digest_stats_pointers_t* a = (query_digest_stats_pointers_t *)malloc(sizeof(query_digest_stats_pointers_t));
+			char** pta { qds->get_row(&digest_text_umap2, a) };
 			result->add_row(pta);
 			free(a);
 #else
@@ -1541,14 +1546,17 @@ SQLite3_result * Query_Processor::get_firewall_query_digests() {
 			qds->free_row(pta);
 #endif
 		}
+
 #ifdef DIGEST_STATS_FAST_1
 	}
 #endif
+
 #ifdef PROXYSQL_QPRO_PTHREAD_MUTEX
 	pthread_rwlock_unlock(&f_digest_rwlock);
 #else
 	spin_rdunlock(&f_digest_rwlock);
 #endif
+
 #ifdef DIGEST_STATS_FAST_1
 	if (map_size >= DIGEST_STATS_FAST_MINSIZE) {
 		curtime2 = monotonic_time();
