@@ -7610,7 +7610,7 @@ void ProxySQL_Admin::stats___proxysql_servers_metrics() {
 
 void ProxySQL_Admin::stats___mysql_firewall_digests(bool reset, bool copy) {
 	if (!GloQPro) return;
-	SQLite3_result * resultset { NULL };
+	SQLite3_result * resultset { nullptr };
 
 	if (reset == true) {
 		resultset = GloQPro->get_firewall_query_digests_reset();
@@ -7618,15 +7618,15 @@ void ProxySQL_Admin::stats___mysql_firewall_digests(bool reset, bool copy) {
 		resultset = GloQPro->get_firewall_query_digests();
 	}
 
-	if (resultset == NULL) return;
+	if (resultset == nullptr) return;
 	statsdb->execute("BEGIN");
 
 	uint64_t rc;
-	sqlite3_stmt *statement1 { NULL };
-	sqlite3_stmt *statement32 { NULL };
+	sqlite3_stmt *statement1 { nullptr };
+	sqlite3_stmt *statement32 { nullptr };
 
-	char *query1 { NULL };
-	char *query32 { NULL };
+	char *query1 { nullptr };
+	char *query32 { nullptr };
 
 	statsdb->execute("DELETE FROM stats_mysql_firewall_digests_reset");
 	statsdb->execute("DELETE FROM stats_mysql_firewall_digests");
