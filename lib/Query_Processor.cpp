@@ -1,6 +1,7 @@
 #include <iostream>     // std::cout
 #include <algorithm>    // std::sort
 #include <vector>       // std::vector
+#include <inttypes.h>
 #include "re2/re2.h"
 #include "re2/regexp.h"
 #include "proxysql.h"
@@ -259,7 +260,7 @@ char** QP_query_digest_f_stats::get_row(umap_query_digest_text* digest_text_umap
 	pta[1] = username;
 	assert(client_address);
 	pta[2] = client_address;
-	sprintf(qdsp->digest,"0x%016llX", static_cast<uint64_t>(digest));
+	sprintf(qdsp->digest,"0x%016" PRIu64, static_cast<uint64_t>(digest));
 	pta[3] = qdsp->digest;
 
 	if (digest_text) {

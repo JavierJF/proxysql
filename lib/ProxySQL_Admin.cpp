@@ -7622,11 +7622,11 @@ void ProxySQL_Admin::stats___mysql_firewall_digests(bool reset, bool copy) {
 	statsdb->execute("BEGIN");
 
 	uint64_t rc;
-	sqlite3_stmt *statement1 { nullptr };
-	sqlite3_stmt *statement32 { nullptr };
+	sqlite3_stmt* statement1 { nullptr };
+	sqlite3_stmt* statement32 { nullptr };
 
-	char *query1 { nullptr };
-	char *query32 { nullptr };
+	const char* query1 { nullptr };
+	const char* query32 { nullptr };
 
 	statsdb->execute("DELETE FROM stats_mysql_firewall_digests_reset");
 	statsdb->execute("DELETE FROM stats_mysql_firewall_digests");
