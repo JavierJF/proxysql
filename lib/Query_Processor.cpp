@@ -32,6 +32,8 @@
 extern MySQL_Threads_Handler *GloMTH;
 #endif
 
+using std::unique_ptr;
+
 static int int_cmp(const void *a, const void *b) {
 	const unsigned long long *ia = (const unsigned long long *)a;
 	const unsigned long long *ib = (const unsigned long long *)b;
@@ -1510,7 +1512,7 @@ void Query_Processor::get_query_digests_reset(umap_query_digest *uqd, umap_query
 
 unique_ptr<SQLite3_result> Query_Processor::get_firewall_query_digests() {
 	proxy_debug(PROXY_DEBUG_MYSQL_QUERY_PROCESSOR, 4, "Dumping current query digest\n");
-	std::unique_ptr<SQLite3_result> result { nullptr };
+	unique_ptr<SQLite3_result> result { nullptr };
 
 #ifdef PROXYSQL_QPRO_PTHREAD_MUTEX
 	pthread_rwlock_rdlock(&f_digest_rwlock);
@@ -1596,8 +1598,8 @@ unique_ptr<SQLite3_result> Query_Processor::get_firewall_query_digests() {
 	return result;
 }
 
-std::unique_ptr<SQLite3_result> Query_Processor::get_firewall_query_digests_reset() {
-	std::unique_ptr<SQLite3_result> result { nullptr };
+unique_ptr<SQLite3_result> Query_Processor::get_firewall_query_digests_reset() {
+	unique_ptr<SQLite3_result> result { nullptr };
 #ifdef PROXYSQL_QPRO_PTHREAD_MUTEX
 	pthread_rwlock_wrlock(&f_digest_rwlock);
 #else

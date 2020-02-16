@@ -21,7 +21,6 @@
 KHASH_MAP_INIT_STR(khStrInt, int)
 #endif
 
-using std::unique_ptr;
 
 #define PROXYSQL_QPRO_PTHREAD_MUTEX
 
@@ -378,8 +377,8 @@ class Query_Processor {
 	unsigned long long query_parser_update_counters(MySQL_Session *sess, enum MYSQL_COM_QUERY_command c, SQP_par_t *qp, unsigned long long t);
 
 	SQLite3_result * get_stats_commands_counters();
-	unique_ptr<SQLite3_result> get_firewall_query_digests();
-	unique_ptr<SQLite3_result> get_firewall_query_digests_reset();
+	std::unique_ptr<SQLite3_result> get_firewall_query_digests();
+	std::unique_ptr<SQLite3_result> get_firewall_query_digests_reset();
 	SQLite3_result * get_query_digests();
 	SQLite3_result * get_query_digests_reset();
 	void get_query_digests_reset(umap_query_digest *uqd, umap_query_digest_text *uqdt);
