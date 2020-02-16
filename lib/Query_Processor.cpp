@@ -2576,11 +2576,11 @@ void Query_Processor::update_query_digest(SQP_par_t *qp, int hid, MySQL_Connecti
 
 	// Update 'digest_umap2'
 	umap_query_digest::iterator it2;
-	it = digest_umap2.find(qp->digest_umap2_total);
+	it2 = digest_umap2.find(qp->digest_umap2_total);
 
-	if (it != digest_umap2.end()) {
+	if (it2 != digest_umap2.end()) {
 		// found
-		qds=(QP_query_digest_stats *)it->second;
+		qds=(QP_query_digest_stats *)it2->second;
 		qds->add_time(t,n, rows_affected,rows_sent);
 	} else {
 		char *dt = NULL;
