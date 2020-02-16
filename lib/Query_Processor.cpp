@@ -268,9 +268,8 @@ char** QP_query_digest_f_stats::get_row(umap_query_digest_text* digest_text_umap
 	if (digest_text) {
 		pta[4] = digest_text;
 	} else {
-		std::unordered_map<uint64_t, char *>::iterator it;
-		it = digest_text_umap->find(digest);
-		if (it != digest_text_umap->end()) {
+		const auto it = digest_text_umap->find(digest);
+		if (it != digest_text_umap->cend()) {
 			pta[4] = it->second;
 		} else {
 			assert(0);
@@ -2575,23 +2574,22 @@ void Query_Processor::update_query_digest(SQP_par_t *qp, int hid, MySQL_Connecti
 	}
 
 	// Update 'digest_umap2'
-	umap_query_digest::iterator it2;
-	it2 = digest_umap2.find(qp->digest_umap2_total);
+	auto it2 { digest_umap2.find(qp->digest_umap2_total) };
 
 	if (it2 != digest_umap2.end()) {
-		// found
-		qds=(QP_query_digest_stats *)it2->second;
-		qds->add_time(t,n, rows_affected,rows_sent);
+		qds = static_cast<QP_query_digest_stats*>(it2->second);
+		qds->add_time(t, n, rows_affected, rows_sent);
 	} else {
-		char *dt = NULL;
-		if (mysql_thread___query_digests_normalize_digest_text==false) {
-			if (_stmt_info==NULL) {
+		char *dt { NULL };
+		if (mysql_thread___query_digests_normalize_digest_text == false) {
+			if (_stmt_info == nullptr) {
 				dt = qp->digest_text;
 			} else {
 				dt = _stmt_info->digest_text;
 			}
 		}
-		char *ca = (char *)"";
+
+		char *ca { static_cast<char *>("") };
 		if (mysql_thread___query_digests_track_hostname) {
 			if (sess->client_myds) {
 				if (sess->client_myds->addr.addr) {
@@ -2599,30 +2597,35 @@ void Query_Processor::update_query_digest(SQP_par_t *qp, int hid, MySQL_Connecti
 				}
 			}
 		}
-		if (_stmt_info==NULL) {
-			qds=new QP_query_digest_stats(ui->username, ui->schemaname, qp->digest, dt, hid, ca);
+
+		if (_stmt_info == nullptr) {
+			qds = new QP_query_digest_stats(ui->username, ui->schemaname, qp->digest, dt, hid, ca);
 		} else {
-			qds=new QP_query_digest_stats(ui->username, ui->schemaname, _stmt_info->digest, dt, hid, ca);
+			qds = new QP_query_digest_stats(ui->username, ui->schemaname, _stmt_info->digest, dt, hid, ca);
 		}
+
 		qds->add_time(t,n, rows_affected,rows_sent);
 		digest_umap2.insert(std::make_pair(qp->digest_umap2_total,(void *)qds));
-		if (mysql_thread___query_digests_normalize_digest_text==true) {
-			uint64_t dig = 0;
-			if (_stmt_info==NULL) {
+
+		if (mysql_thread___query_digests_normalize_digest_text == true) {
+			uint64_t dig { 0 };
+
+			if (_stmt_info == nullptr) {
 				dig = qp->digest;
 			} else {
 				dig = _stmt_info->digest;
 			}
-			std::unordered_map<uint64_t, char *>::iterator it2;
-			it2=digest_text_umap2.find(dig);
-			if (it2 != digest_text_umap2.end()) {
-				// found
+
+			const auto it2 { digest_text_umap2.find(dig) };
+
+			if (it2 != digest_text_umap2.cend()) {
 			} else {
-				if (_stmt_info==NULL) {
+				if (_stmt_info == nullptr) {
 					dt = strdup(qp->digest_text);
 				} else {
 					dt = strdup(_stmt_info->digest_text);
 				}
+
 				digest_text_umap2.insert(std::make_pair(dig,dt));
 			}
 		}
