@@ -1,0 +1,64 @@
+diff --git src/Makefile.am src/Makefile.am
+index 5e549bb..a62407e 100644
+--- src/Makefile.am
++++ src/Makefile.am
+@@ -37,7 +37,7 @@ endif
+ 
+ libhttpserver_la_CFLAGS = $(AM_CFLAGS)
+ libhttpserver_la_CXXFLAGS = $(AM_CXXFLAGS)
+-libhttpserver_la_LDFLAGS = $(AM_LDFLAGS) -no-undefined
++libhttpserver_la_LDFLAGS = $(AM_LDFLAGS) -no-undefined -lboost_regex
+ 
+ install-data-hook:
+ 	(mkdir -p $(DESTDIR)$(includedir) && cd $(DESTDIR)$(includedir) && $(LN_S) -f httpserver.hpp httpserverpp)
+diff --git src/details/http_endpoint.cpp src/details/http_endpoint.cpp
+index be76ddd..79e9c59 100644
+--- src/details/http_endpoint.cpp
++++ src/details/http_endpoint.cpp
+@@ -124,9 +124,9 @@ http_endpoint::http_endpoint
+         url_normalized += "$";
+         try
+         {
+-            re_url_normalized = std::regex(url_normalized, std::regex::extended | std::regex::icase | std::regex::nosubs);
++            re_url_normalized = boost::regex(url_normalized, boost::regex::extended | boost::regex::icase | boost::regex::nosubs);
+         }
+-        catch (std::regex_error& e)
++        catch (boost::regex_error& e)
+         {
+             throw std::invalid_argument("Not a valid regex in URL: " + url_normalized);
+         }
+diff --git src/httpserver/details/http_endpoint.hpp src/httpserver/details/http_endpoint.hpp
+index 147956a..c16dbc4 100644
+--- src/httpserver/details/http_endpoint.hpp
++++ src/httpserver/details/http_endpoint.hpp
+@@ -25,11 +25,11 @@
+ #ifndef _HTTP_ENDPOINT_HPP_
+ #define _HTTP_ENDPOINT_HPP_
+ 
+-#include <regex>
+ #include <stdexcept>
+ #include <string>
+ #include <utility>
+ #include <vector>
++#include <boost/regex.hpp>
+ 
+ namespace httpserver
+ {
+@@ -136,7 +136,7 @@ class http_endpoint
+         http_endpoint():
+             url_complete("/"),
+             url_normalized("/"),
+-            re_url_normalized(std::regex("")), // initialize empty
++            re_url_normalized(boost::regex("")), // initialize empty
+             family_url(false),
+             reg_compiled(false)
+         {
+@@ -187,7 +187,7 @@ class http_endpoint
+         /**
+          * Regex used in comparisons
+         **/
+-        std::regex re_url_normalized;
++        boost::regex re_url_normalized;
+ 
+         /**
+          * Boolean indicating wheter the endpoint represents a family
